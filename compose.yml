@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:14.3
+    restart: always
+    container_name: store
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: admin
+      POSTGRES_DB: store
+    ports:
+      - 5433:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+volumes:
+  postgres_data:
