@@ -1,26 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoryRepository } from './category.repository';
 
 @Injectable()
 export class CategoryService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return createCategoryDto;
+  constructor(private readonly categoryRepository: CategoryRepository) {}
+
+  async create(createCategoryDto: CreateCategoryDto) {
+    let category = await this.categoryRepository.findOneBy({
+      name: createCategoryDto.name,
+    });
+    if (category) throw new BadRequestException('The category already exist');
+    category = this.categoryRepository.create(createCategoryDto);
+    return this.categoryRepository.save(category);
   }
 
   findAll() {
-    return `This action returns all category`;
+    return this.categoryRepository.find({});
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  async findOne(id: number) {
+    const category = await this.categoryRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!category)
+      throw new NotFoundException(`Category with id: ${id} does not exist`);
+    return category;
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category ${JSON.stringify(updateCategoryDto)}`;
+  async update(id: number, updateCategoryDto: UpdateCategoryDto) {
+    const category = await this.findOne(id);
+    await this.categoryRepository.update(id, updateCategoryDto);
+    return { ...category, ...updateCategoryDto };
   }
 
   remove(id: number) {
-    return `This action removes a #${id} category`;
+    this.categoryRepository.delete({ id });
+    return id;
   }
 }
