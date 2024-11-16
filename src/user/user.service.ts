@@ -1,12 +1,12 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRepository } from './user.repository';
 
 @Injectable()
@@ -21,11 +21,13 @@ export class UserService {
       );
     user = this.userRepository.create({ email, ...createDto });
     const passwordHash = await argon2.hash(password);
-    return this.userRepository.save({
+    const userDb = await this.userRepository.save({
       ...createDto,
       email,
       password: passwordHash,
     });
+    delete userDb.password;
+    return userDb;
   }
 
   findAll() {
@@ -40,11 +42,20 @@ export class UserService {
     return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} ${JSON.stringify(updateUserDto)} user`;
+  async updatePassword(email: string, password: string) {
+    const userDb = await this.userRepository.findOneBy({ email });
+    if (!userDb) throw new NotFoundException('User does not exist');
+    try {
+      const passwordHash = await argon2.hash(password);
+      await this.userRepository.update({ email }, { password: passwordHash });
+      return { email };
+    } catch (error: any) {
+      throw new InternalServerErrorException(error?.message);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number) {
+    await this.findById(id);
+    await this.userRepository.delete(id);
   }
 }
