@@ -4,6 +4,7 @@ import { SharedModule } from './shared/shared.module';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './shared/configuration';
 import { CategoryModule } from './category/category.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CategoryModule } from './category/category.module';
     ProductModule,
     CategoryModule,
     SharedModule,
+    UserModule,
   ],
 })
 export class AppModule {}
